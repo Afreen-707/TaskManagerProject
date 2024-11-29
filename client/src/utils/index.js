@@ -52,3 +52,5 @@ export const BGS = [
   "bg-red-600",
   "bg-green-600",
 ];
+
+

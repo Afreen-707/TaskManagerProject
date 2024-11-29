@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect,useState} from "react";
 import {
   MdAdminPanelSettings,
   MdKeyboardArrowDown,
@@ -14,6 +14,7 @@ import clsx from "clsx";
 import { Chart } from "../components/Chart";
 import { BGS, PRIOTITYSTYELS, TASK_TYPE, getInitials } from "../utils";
 import UserInfo from "../components/UserInfo";
+import axios from "axios";
 
 const TaskTable = ({ tasks }) => {
   const ICONS = {
@@ -146,85 +147,140 @@ const UserTable = ({ users }) => {
   );
 };
 const Dashboard = () => {
-  const totals = summary.tasks;
+  const [totalTask, settotalTask] = useState(0);
+  const [completedTask, setcompletedTask] = useState(0);
+  const [inProgressTask, setInProgressTask] = useState(0);
+  const [todoTask, settodoTask] = useState(0);
+  const [fetchedUsers, setfetchedUsers] = useState([]); 
+  const [fetchedTasks, setfetchedTasks] = useState([]);
+  // const last10Task = fetchedTasks.slice(-10);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        console.log("Fetching users...");
+        const { data: allUsers } = await axios.get("http://localhost:8800/get-team"); 
+        console.log("Fetched users:", allUsers);
+        setfetchedUsers(allUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        console.log("Fetching tasks...");
+        const { data: allTasks } = await axios.get("http://localhost:8800/get-tasks"); 
+        console.log("Fetched tasks:", allTasks);
+        setfetchedTasks(allTasks);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+
+    fetchTasks();
+  }, []);
 
   const stats = [
     {
       _id: "1",
       label: "TOTAL TASK",
-      total: summary?.totalTasks || 0,
+      total: totalTask?.length || 0,
       icon: <FaNewspaper />,
       bg: "bg-[#1d4ed8]",
     },
     {
       _id: "2",
-      label: "COMPLTED TASK",
-      total: totals["completed"] || 0,
+      label: "COMPLETED TASK",
+      total: completedTask?.length || 0,
       icon: <MdAdminPanelSettings />,
       bg: "bg-[#0f766e]",
     },
     {
       _id: "3",
-      label: "TASK IN PROGRESS ",
-      total: totals["in progress"] || 0,
+      label: "TASK IN PROGRESS",
+      total: inProgressTask?.length || 0,
       icon: <LuClipboardEdit />,
       bg: "bg-[#f59e0b]",
     },
     {
       _id: "4",
       label: "TODOS",
-      total: totals["todo"],
+      total: todoTask?.length || 0,
       icon: <FaArrowsToDot />,
-      bg: "bg-[#be185d]" || 0,
+      bg: "bg-[#be185d]",
     },
   ];
 
-  const Card = ({ label, count, bg, icon }) => {
-    return (
-      <div className='w-full h-32 bg-white p-5 shadow-md rounded-md flex items-center justify-between'>
-        <div className='h-full flex flex-1 flex-col justify-between'>
-          <p className='text-base text-gray-600'>{label}</p>
-          <span className='text-2xl font-semibold'>{count}</span>
-          <span className='text-sm text-gray-400'>{"110 last month"}</span>
-        </div>
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await Promise.all([
+          axios.get("http://localhost:8800/tasks").then((res) => {
+            settotalTask(res.data || []);
+          }),
+          axios.get("http://localhost:8800/completedTasks").then((res) => {
+            setcompletedTask(res.data.tasks || []);
+          }),
+          axios.get("http://localhost:8800/inProgressTasks").then((res) => {
+            setInProgressTask(res.data.tasks || []);
+          }),
+          axios.get("http://localhost:8800/todoTasks").then((res) => {
+            settodoTask(res.data.tasks || []);
+          }),
+        ]);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
 
-        <div
-          className={clsx(
-            "w-10 h-10 rounded-full flex items-center justify-center text-white",
-            bg
-          )}
-        >
-          {icon}
-        </div>
+    fetchData();
+  }, []);
+
+  const Card = ({ label, count, bg, icon }) => (
+    <div className="w-full h-32 bg-white p-5 shadow-md rounded-md flex items-center justify-between">
+      <div className="h-full flex flex-1 flex-col justify-between">
+        <p className="text-base text-gray-600">{label}</p>
+        <span className="text-2xl font-semibold">{count}</span>
+        <span className="text-sm text-gray-400">{"110 last month"}</span>
       </div>
-    );
-  };
+
+      <div
+        className={clsx(
+          "w-10 h-10 rounded-full flex items-center justify-center text-white",
+          bg
+        )}
+      >
+        {icon}
+      </div>
+    </div>
+  );
+
   return (
-    <div classNamee='h-full py-4'>
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-5'>
+    <div className="h-full py-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
         {stats.map(({ icon, bg, label, total }, index) => (
           <Card key={index} icon={icon} bg={bg} label={label} count={total} />
         ))}
       </div>
 
-      <div className='w-full bg-white my-16 p-4 rounded shadow-sm'>
-        <h4 className='text-xl text-gray-600 font-semibold'>
+      <div className="w-full bg-white my-16 p-4 rounded shadow-sm">
+        <h4 className="text-xl text-gray-600 font-semibold">
           Chart by Priority
         </h4>
         <Chart />
       </div>
 
-      <div className='w-full flex flex-col md:flex-row gap-4 2xl:gap-10 py-8'>
-        {/* /left */}
-
-        <TaskTable tasks={summary.last10Task} />
-
-        {/* /right */}
-
-        <UserTable users={summary.users} />
+      <div className="w-full flex flex-col md:flex-row gap-4 2xl:gap-10 py-8">
+        <TaskTable tasks={fetchedTasks.last10Task} />
+        <UserTable users={fetchedUsers} /> {/* Pass fetchedUsers as a prop */}
       </div>
     </div>
   );
 };
 
 export default Dashboard;
+

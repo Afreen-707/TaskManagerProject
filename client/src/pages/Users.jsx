@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Title from "../components/Title";
 import Button from "../components/Button";
 import { IoMdAdd } from "react-icons/io";
@@ -7,15 +7,17 @@ import { getInitials } from "../utils";
 import clsx from "clsx";
 import ConfirmatioDialog, { UserAction } from "../components/Dialogs";
 import AddUser from "../components/AddUser";
+import { getTeam } from "../utils/api";
 
 const Users = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [open, setOpen] = useState(false);
   const [openAction, setOpenAction] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [fetchedUsers, setfetchedUsers] = useState();
 
-  const userActionHandler = () => {};
-  const deleteHandler = () => {};
+  const userActionHandler = () => { };
+  const deleteHandler = () => { };
 
   const deleteClick = (id) => {
     setSelected(id);
@@ -26,7 +28,25 @@ const Users = () => {
     setSelected(el);
     setOpen(true);
   };
+  var allUsers = null;
 
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        console.log("Fetching users...");
+        const allUsers = await getTeam();
+        console.log("Fetched users:", allUsers);
+        setfetchedUsers(allUsers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  console.log(allUsers, "allUsers")
   const TableHeader = () => (
     <thead className='border-b border-gray-300'>
       <tr className='text-black text-left'>
@@ -104,8 +124,9 @@ const Users = () => {
             <table className='w-full mb-5'>
               <TableHeader />
               <tbody>
-                {summary.users?.map((user, index) => (
-                  <TableRow key={index} user={user} />
+                {fetchedUsers?.map((user, index) => (
+                 <TableRow key={index} user={user} />
+
                 ))}
               </tbody>
             </table>

@@ -14,6 +14,7 @@ import Trash from "./pages/Trash";
 import Users from "./pages/Users";
 import Dashboard from "./pages/dashboard";
 import { setOpenSidebar } from "./redux/slices/authSlice";
+import MyComponent from "./pages/MyComponent.JSX";
 
 function Layout() {
   const { user } = useSelector((state) => state.auth);
@@ -104,6 +105,7 @@ function App() {
           <Route path='/in-progress/:status' element={<Tasks />} />
           <Route path='/todo/:status' element={<Tasks />} />
           <Route path='/team' element={<Users />} />
+          <Route path='/mycomp' element={<MyComponent />} />
           <Route path='/trashed' element={<Trash />} />
           <Route path='/task/:id' element={<TaskDetails />} />
         </Route>
